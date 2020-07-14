@@ -1,8 +1,14 @@
 package backup;
 
+import bot.Backups;
 import config.Config;
+import net.dv8tion.jda.api.audit.ActionType;
+import net.dv8tion.jda.api.audit.AuditLogEntry;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.exceptions.ErrorResponseException;
+import net.dv8tion.jda.api.requests.restaction.pagination.PaginationAction;
+import net.dv8tion.jda.internal.entities.GuildImpl;
+import net.dv8tion.jda.internal.entities.UserImpl;
 import sql.BaseDatabase;
 import utils.Serializer;
 import utils.Utils;
@@ -13,9 +19,9 @@ import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 public class Backup {
@@ -49,6 +55,7 @@ public class Backup {
             try (Connection conn = this.writeDatabase.getConnection()) {
 
                 //TODO: Track deletions for roles, channels, and etc too!
+                // Last modified support to categories, emotes, roles, text/voice channels, & settings
 
                 // creates the server settings table
                 String createSettings = "CREATE TABLE IF NOT EXISTS settings (" +
@@ -62,7 +69,8 @@ public class Backup {
                         "default_notif_level VARCHAR (25), " +
                         "explicit_content_level VARCHAR (25), " +
                         "region VARCHAR (25), " +
-                        "verification_level VARCHAR (25));";
+                        "verification_level VARCHAR (25), " +
+                        "last_modified TIMESTAMP);";
                 try (PreparedStatement ps = conn.prepareStatement(createSettings)) {
                     ps.execute();
                 }
@@ -77,7 +85,7 @@ public class Backup {
                         "role_order SMALLINT, " +
                         "permissions VARCHAR, " +
                         "deleted TINYINT (1) default 0, " +
-                        "deletion_time timestamp default null);";
+                        "last_modified timestamp default null);";
                 try (PreparedStatement ps = conn.prepareStatement(createRoles)) {
                     ps.execute();
                 }
@@ -96,7 +104,7 @@ public class Backup {
                         "emote_id BIGINT UNIQUE PRIMARY KEY NOT NULL, " +
                         "emote_name VARCHAR (25), " +
                         "deleted TINYINT (1) default 0, " +
-                        "deletion_time timestamp default null);";
+                        "last_modified timestamp default null);";
                 try (PreparedStatement ps = conn.prepareStatement(createEmotes)) {
                     ps.execute();
                 }
@@ -106,8 +114,10 @@ public class Backup {
                         "user_id BIGINT PRIMARY KEY UNIQUE NOT NULL, " +
                         "user_tag VARCHAR(75), " +
                         "ban_reason VARCHAR, " +
-                        "unbanned TINYINT (1) default 0, " +
-                        "unban_time timestamp default null);";
+                        // in this context, deleted means unbanned
+                        "deleted TINYINT (1) default 0, " +
+                        // in this context last_modified refers to unban time
+                        "last_modified timestamp default null);";
                 try (PreparedStatement ps = conn.prepareStatement(bannedUsers)) {
                     ps.execute();
                 }
@@ -119,7 +129,7 @@ public class Backup {
                         "category_name VARCHAR (50), " +
                         "permissions VARCHAR, " +
                         "deleted TINYINT (1) default 0, " +
-                        "deletion_time timestamp default null);";
+                        "last_modified timestamp default null);";
                 try (PreparedStatement ps = conn.prepareStatement(createCategories)) {
                     ps.execute();
                 }
@@ -133,7 +143,7 @@ public class Backup {
                         "user_limit SMALLINT, " +
                         "permission VARCHAR, " +
                         "deleted TINYINT (1) default 0," +
-                        "deletion_time timestamp default null);";
+                        "last_modified timestamp default null);";
                 try (PreparedStatement ps = conn.prepareStatement(createVoiceChannels)) {
                     ps.execute();
                 }
@@ -147,7 +157,7 @@ public class Backup {
                         "permissions varchar, " +
                         "slow_mode int," +
                         "deleted TINYINT (1) default 0," +
-                        "deletion_time timestamp default null); " +
+                        "last_modified timestamp default null); " +
                         "CREATE UNIQUE INDEX channels_channel_id_uindex " +
                         "on channels (channel_id);";
                 try (PreparedStatement ps = conn.prepareStatement(createTextChannels)) {
@@ -169,10 +179,26 @@ public class Backup {
                         "embeds varchar, " +
                         "attachment_id bigint default -1, " +
                         "deleted tinyint(1) default 0, " +
-                        "deletion_time timestamp default null); " +
+                        "last_modified timestamp default null); " +
                         "create unique index messages_message_id_uindex " +
                         "on messages (message_id);";
                 try (PreparedStatement ps = conn.prepareStatement(createMsgs)) {
+                    ps.execute();
+                }
+
+                // creates the audit logs table (which is used to judge modification
+                // TODO: Purge logs order then 90d
+                String auditLogs = "CREATE TABLE IF NOT EXISTS audit_logs (" +
+                        "action_id BIGINT PRIMARY KEY UNIQUE NOT NULL, " +
+                        "action_type SMALLINT, " +
+                        "target_id BIGINT, " +
+                        "guild_id BIGINT, " +
+                        "user_id BIGINT, " +
+                        "reason VARCHAR, " +
+                        "changes VARCHAR, " +
+                        "options VARCHAR, " +
+                        "creation TIMESTAMP);";
+                try (PreparedStatement ps = conn.prepareStatement(auditLogs)) {
                     ps.execute();
                 }
 
@@ -611,6 +637,7 @@ public class Backup {
                         messages.removeIf(msg -> msg.getTimeCreated().isBefore(finalTime));
                         System.out.println("Inserting and updating " + (messages.size()) + " messages from text channel #" + channel.getName() + "!");
 
+                        /* REMOVED BECAUSE NOW USING AUDIT LOGS TO FINE DELETED MESSAGES WITH ACTUAL DELETE TIME! :)
                         // mark these msgs deleted because they only exist in the db and not in the real world so must have been deleted
                         try {
                             List<Long> msgIds = messages.stream().mapToLong(ISnowflake::getIdLong).boxed().collect(Collectors.toList());
@@ -622,6 +649,7 @@ public class Backup {
                         } catch (InterruptedException | ExecutionException e) {
                             e.printStackTrace();
                         }
+                         */
                     }
 
 
@@ -647,16 +675,22 @@ public class Backup {
     }
 
     public void backupMessages(List<Message> messages) {
-        //TODO: Welcome messages from system channel don't get any content copied
 
         // Note: The for loop is outside the the get connection so the message backups won't freeze dp writes (because this allows for connection to be released every msg)
         int i = 0;
         for (Message message : messages) {
+
+            String serializedEmbed = Serializer.serializeEmbeds(message.getEmbeds());
+            // TODO: Welcome messages from system channel don't get any content copied : TEST FIX ->
+            // don't save empty msgs
+            if (message.getContentRaw().equalsIgnoreCase("") && serializedEmbed.equalsIgnoreCase("")) return;
+
             try (Connection conn = this.writeDatabase.getConnection()) {
 
                 String query = "INSERT OR REPLACE INTO `messages` (message_id, channel_id, creation, member_avatar, member_name, message_content, reactions, pinned, embeds, attachment_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
 
                 try (PreparedStatement ps = conn.prepareStatement(query)) {
+
                     ps.setLong(1, message.getIdLong());
                     ps.setLong(2, message.getChannel().getIdLong());
                     ps.setTimestamp(3, new Timestamp(message.getTimeCreated().toInstant().toEpochMilli()));
@@ -666,7 +700,7 @@ public class Backup {
                     ps.setString(6, message.getContentRaw());
                     ps.setString(7, Serializer.serializeReactions(message.getReactions()));
                     ps.setBoolean(8, message.isPinned());
-                    ps.setString(9, Serializer.serializeEmbeds(message.getEmbeds()));
+                    ps.setString(9, serializedEmbed);
 
                     boolean attachments = message.getAttachments().size() > 0;
                     ps.setLong(10, attachments ? Utils.saveAttachment(message.getAttachments().get(0)) : -1);
@@ -689,8 +723,191 @@ public class Backup {
 
     }
 
+
+    public CompletableFuture<List<AuditLogEntry>> getAuditLogs() {
+
+        CompletableFuture<List<AuditLogEntry>> futureAuditLogs = new CompletableFuture<>();
+
+        Utils.runAsync( () -> {
+            // get audit logs
+            PaginationAction.PaginationIterator<AuditLogEntry> logsIter = guild.retrieveAuditLogs().iterator();
+            List<AuditLogEntry> logs = new ArrayList<>();
+            while (logsIter.hasNext()) {
+                AuditLogEntry log = logsIter.next();
+
+                // TODO: Add config to change this
+                OffsetDateTime logLimit = OffsetDateTime.ofInstant(Instant.now().minusSeconds(60*60*24*3), ZoneId.systemDefault());
+                Timestamp lastLogTimestamp = this.getLastLogTime();
+                OffsetDateTime lastLog = lastLogTimestamp == null ? null : OffsetDateTime.ofInstant(lastLogTimestamp.toInstant(), ZoneId.systemDefault());
+                // works since the iterator goes from newest log to oldest log
+                if (log.getTimeCreated().isBefore(logLimit) || (lastLog != null && log.getTimeCreated().isBefore(lastLog))) {
+                    break;
+                }
+
+                // don't add logs for useless types...
+                if (log.getType() == ActionType.MEMBER_VOICE_MOVE || log.getType() == ActionType.MEMBER_VOICE_KICK || log.getType() == ActionType.INVITE_CREATE || log.getType() == ActionType.INVITE_DELETE)
+                    continue;
+
+                logs.add(log);
+            }
+
+            futureAuditLogs.complete(logs);
+        });
+
+
+        return futureAuditLogs;
+    }
+
+    public CompletableFuture<Void> saveAuditLogs (List<AuditLogEntry> logs) {
+        CompletableFuture<Void> futureCompletion = new CompletableFuture<>();
+
+        Utils.runAsync( () -> {
+            int i = 0;
+            for (AuditLogEntry log : logs) {
+                try (Connection conn = this.writeDatabase.getConnection()) {
+
+                    String query = "INSERT OR REPLACE INTO audit_logs (action_id, action_type, target_id, guild_id, user_id, reason, changes, options, creation) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);";
+
+                    try (PreparedStatement ps = conn.prepareStatement(query)) {
+                        ps.setLong(1, log.getIdLong());
+                        ps.setInt(2, log.getTypeRaw());
+                        ps.setLong(3, log.getTargetIdLong());
+                        ps.setLong(4, guild.getIdLong());
+                        ps.setLong(5, log.getUser() == null ? -1 : log.getUser().getIdLong());
+                        ps.setString(6, log.getReason());
+                        ps.setString(7, Serializer.serializeLogChanges(log.getChanges()));
+                        ps.setString(8, Serializer.serializeLogOptions(log.getOptions()));
+                        ps.setTimestamp(9, new Timestamp(log.getTimeCreated().toInstant().toEpochMilli()));
+
+
+                        ps.executeUpdate();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                    if (i != 0 && i % 100 == 0) {
+                        long timeleft = (long) (((logs.size() - i) * 13.5) / 1000);
+                        System.out.println("Saved " + i + " / " + logs.size() + " log entries to the database... [ETA: " + timeleft + " seconds left]");
+                    }
+
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+
+                i++;
+            }
+
+            futureCompletion.complete(null);
+        });
+
+        return futureCompletion;
+    }
+
+    public CompletableFuture<Void> updateMessagesWithLogs(List<AuditLogEntry> logs) {
+        CompletableFuture<Void> futureCompletion = new CompletableFuture<>();
+
+        System.out.println("Updating deleted messages using audit log data...");
+        Utils.runAsync( () -> {
+            List<AuditLogEntry> deletedMsgLog = logs.stream().filter( (l) -> l.getType() == ActionType.MESSAGE_DELETE).collect(Collectors.toList());
+            for (AuditLogEntry log : deletedMsgLog) {
+                this.markMessageDeleted(log.getTargetIdLong(), log.getTimeCreated().toInstant().toEpochMilli());
+            }
+
+            futureCompletion.complete(null);
+        });
+
+        return futureCompletion;
+    }
+
+
+    public Timestamp getLastLogTime () {
+
+        try (Connection conn = this.readDatabase.getConnection()) {
+
+            String query = "SELECT * FROM audit_logs WHERE guild_id=? ORDER BY creation DESC;";
+
+            try (PreparedStatement ps = conn.prepareStatement(query)) {
+                ps.setLong(1, guild.getIdLong());
+                try (ResultSet result = ps.executeQuery()) {
+                    while (result.next()) {
+                        try {
+                            return result.getTimestamp("creation");
+                        } catch (ErrorResponseException e) {
+                            System.out.println("Latest msg was deleted.. trying to find another one...");
+                        }
+                    }
+                }
+            }
+
+        } catch (SQLException | NullPointerException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+
+    }
+
+    public CompletableFuture<List<AuditLogEntry>> getAuditLogsFromDb() {
+
+        CompletableFuture<List<AuditLogEntry>> futureAuditLogs = new CompletableFuture<>();
+
+        Utils.runAsync( () -> {
+            // get audit logs
+            List<AuditLogEntry> logs = new ArrayList<>();
+
+            try (Connection conn = this.readDatabase.getConnection()) {
+
+                String query = "SELECT * FROM audit_logs WHERE guild_id=? AND creation>?;";
+                try (PreparedStatement ps = conn.prepareStatement(query)) {
+                    ps.setLong(1, guild.getIdLong());
+                    // TODO: Config support & Test this ->
+                    ps.setTimestamp(2, new Timestamp(System.currentTimeMillis() - 1000L * 60 * 60 * 24 * 30));
+                    try (ResultSet result = ps.executeQuery()) {
+
+                        // create a user cache because many times its a same ppl in audit logs this makes the program faster!
+                        // For some reason jda is not always cacheing retrieved users
+                        HashMap<Long, UserImpl> retrievedUserCache = new HashMap<>();
+
+                        while (result.next()) {
+
+                            int rawAction = result.getInt("action_type");
+
+                            long userId = result.getLong("user_id");
+                            if (!retrievedUserCache.containsKey(userId)) {
+                                retrievedUserCache.put(userId, (UserImpl) Backups.getJda().retrieveUserById(userId).complete());
+                            }
+
+                            AuditLogEntry log = new AuditLogEntry(
+                                    ActionType.from(rawAction),
+                                    rawAction,
+                                    result.getLong("action_id"),
+                                    result.getLong("target_id"),
+                                    (GuildImpl) guild,
+                                    retrievedUserCache.get(userId),
+                                    null,
+                                    result.getString("reason"),
+                                    Serializer.deserializeLogChanges(result.getString("changes")),
+                                    Serializer.deserializeLogOptions(result.getString("options"))
+                            );
+
+                            logs.add(log);
+                        }
+                    }
+                }
+
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+
+            futureAuditLogs.complete(logs);
+        });
+
+
+        return futureAuditLogs;
+    }
+
+
     /**
-     * @return - The last message that was saved in the database for this channel
+     * @return - Time stamp of the last message that was saved in the database for this channel
      */
     public Timestamp getLastSavedMessageTime (TextChannel channel) {
 
@@ -717,6 +934,7 @@ public class Backup {
 
         return null;
     }
+
 
     public void markMessageDeleted (long messageId, long time) {
 

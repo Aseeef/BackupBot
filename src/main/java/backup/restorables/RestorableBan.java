@@ -1,10 +1,8 @@
-package restorables;
+package backup.restorables;
 
 import net.dv8tion.jda.api.entities.Guild;
-import utils.Utils;
 
 import java.sql.Timestamp;
-import java.util.concurrent.CompletableFuture;
 
 public class RestorableBan extends Restorable {
 
@@ -27,7 +25,7 @@ public class RestorableBan extends Restorable {
 
     @Override
     public void restore(long time) {
-        if (this.isRestorable(time)) {
+        if (this.getRestoreType(time) == RestoreType.RESTORE) {
             this.guild.ban(String.valueOf(userId), 0, banReason).queue();
         }
     }

@@ -2,6 +2,7 @@ package backup;
 
 import bot.Backups;
 import config.Config;
+import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.audit.ActionType;
 import net.dv8tion.jda.api.audit.AuditLogEntry;
 import net.dv8tion.jda.api.entities.*;
@@ -29,8 +30,7 @@ public class Backup {
     private static Backup instance;
 
     private Guild guild;
-    private BaseDatabase writeDatabase;
-    private BaseDatabase readDatabase;
+    private BaseDatabase database;
 
     /**
      * @param guild - The guild which to create a back up of.
@@ -46,13 +46,11 @@ public class Backup {
     public CompletableFuture<Void> init() {
         CompletableFuture<Void> futureCompletion = new CompletableFuture<>();
 
-        this.readDatabase = BaseDatabase.getReadInstance(this.guild.getId());
-        this.readDatabase.init();
-        this.writeDatabase = BaseDatabase.getWriteInstance(this.guild.getId());
-        this.writeDatabase.init();
+        this.database = BaseDatabase.getInstance(this.guild.getId());
+        this.database.init();
         Utils.runAsync( () -> {
 
-            try (Connection conn = this.writeDatabase.getConnection()) {
+            try (Connection conn = this.database.getConnection()) {
 
                 //TODO: Track deletions for roles, channels, and etc too!
                 // Last modified support to categories, emotes, roles, text/voice channels, & settings
@@ -82,8 +80,9 @@ public class Backup {
                         "role_name VARCHAR (50), " +
                         "role_color INT, " +
                         "hoisted TINYINT (1), " +
+                        "mentionable TINYINT (1), " +
                         "role_order SMALLINT, " +
-                        "permissions VARCHAR, " +
+                        "permissions BIGINT, " +
                         "deleted TINYINT (1) default 0, " +
                         "last_modified timestamp default null);";
                 try (PreparedStatement ps = conn.prepareStatement(createRoles)) {
@@ -226,7 +225,7 @@ public class Backup {
                 System.out.println("Saving and updating server settings to the database...");
                 long start = System.currentTimeMillis();
 
-                try (Connection conn = this.writeDatabase.getConnection()) {
+                try (Connection conn = this.database.getConnection()) {
 
                     String query = "INSERT OR REPLACE INTO settings (guild_id, guild_name, guild_description, afk_channel_id, default_channel_id, system_channel_id, afk_timeout_seconds, default_notif_level, explicit_content_level, region, verification_level)  VALUES  (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
 
@@ -287,7 +286,7 @@ public class Backup {
                     long start = System.currentTimeMillis();
                     for (Member member : members) {
 
-                        try (Connection conn = this.writeDatabase.getConnection()) {
+                        try (Connection conn = this.database.getConnection()) {
 
                             String query = "INSERT OR REPLACE INTO members (member_id, member_nick, member_roles) VALUES (?, ?, ?);";
 
@@ -335,7 +334,7 @@ public class Backup {
                 long start = System.currentTimeMillis();
                 for (Emote emote : emotes) {
 
-                    try (Connection conn = this.writeDatabase.getConnection()) {
+                    try (Connection conn = this.database.getConnection()) {
 
                         String query = "INSERT OR REPLACE INTO emotes (emote_id, emote_name) VALUES (?, ?);";
 
@@ -378,7 +377,7 @@ public class Backup {
                 long start = System.currentTimeMillis();
                 for (Guild.Ban ban : bans) {
 
-                    try (Connection conn = this.writeDatabase.getConnection()) {
+                    try (Connection conn = this.database.getConnection()) {
                         String query = "INSERT OR REPLACE INTO bans (user_id, user_tag, ban_reason) VALUES (?, ?, ?);";
 
                         try (PreparedStatement ps = conn.prepareStatement(query)) {
@@ -423,17 +422,18 @@ public class Backup {
                 long start = System.currentTimeMillis();
                 for (Role role : roles) {
 
-                    try (Connection conn = this.writeDatabase.getConnection()) {
+                    try (Connection conn = this.database.getConnection()) {
 
-                        String query = "INSERT OR REPLACE INTO roles (role_id, role_name, role_color, hoisted, role_order, permissions) VALUES (?, ?, ?, ?, ?, ?);";
+                        String query = "INSERT OR REPLACE INTO roles (role_id, role_name, role_color, hoisted, mentionable, role_order, permissions) VALUES (?, ?, ?, ?, ?, ?, ?);";
 
                         try (PreparedStatement ps = conn.prepareStatement(query)) {
                             ps.setLong(1, role.getIdLong());
                             ps.setString(2, role.getName());
                             ps.setInt(3, role.getColorRaw());
                             ps.setBoolean(4, role.isHoisted());
-                            ps.setInt(5, role.getPosition());
-                            ps.setString(6, Serializer.serializePerms(role.getPermissions()));
+                            ps.setBoolean(5, role.isMentionable());
+                            ps.setInt(6, role.getPosition());
+                            ps.setLong(7, Permission.getRaw(role.getPermissions()));
                             ps.executeUpdate();
                         }
 
@@ -469,7 +469,7 @@ public class Backup {
                 long start = System.currentTimeMillis();
                 for (Category category : categories) {
 
-                    try (Connection conn = this.writeDatabase.getConnection()) {
+                    try (Connection conn = this.database.getConnection()) {
 
                         String query = "INSERT OR REPLACE INTO categories (category_id, category_name, permissions) VALUES (?, ?, ?);";
 
@@ -513,7 +513,7 @@ public class Backup {
                 long start = System.currentTimeMillis();
                 for (VoiceChannel channel : voiceChannels) {
 
-                    try (Connection conn = this.writeDatabase.getConnection()) {
+                    try (Connection conn = this.database.getConnection()) {
 
                         String query = "INSERT OR REPLACE INTO voicechannels (channel_id, category_id, channel_name, bitrate, user_limit, permission) VALUES (?, ?, ?, ?, ?, ?);";
 
@@ -562,7 +562,7 @@ public class Backup {
                 long start = System.currentTimeMillis();
                 for (TextChannel channel : textChannels) {
 
-                    try (Connection conn = this.writeDatabase.getConnection()) {
+                    try (Connection conn = this.database.getConnection()) {
 
                         String query = "INSERT OR REPLACE INTO `textchannels` (channel_id, category_id, channel_name, channel_topic, permissions, slow_mode) VALUES (?, ?, ?, ?, ?, ?);";
 
@@ -685,7 +685,7 @@ public class Backup {
             // don't save empty msgs
             if (message.getContentRaw().equalsIgnoreCase("") && serializedEmbed.equalsIgnoreCase("")) return;
 
-            try (Connection conn = this.writeDatabase.getConnection()) {
+            try (Connection conn = this.database.getConnection()) {
 
                 String query = "INSERT OR REPLACE INTO `messages` (message_id, channel_id, creation, member_avatar, member_name, message_content, reactions, pinned, embeds, attachment_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
 
@@ -764,7 +764,7 @@ public class Backup {
         Utils.runAsync( () -> {
             int i = 0;
             for (AuditLogEntry log : logs) {
-                try (Connection conn = this.writeDatabase.getConnection()) {
+                try (Connection conn = this.database.getConnection()) {
 
                     String query = "INSERT OR REPLACE INTO audit_logs (action_id, action_type, target_id, guild_id, user_id, reason, changes, options, creation) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);";
 
@@ -821,7 +821,7 @@ public class Backup {
 
     public Timestamp getLastLogTime () {
 
-        try (Connection conn = this.readDatabase.getConnection()) {
+        try (Connection conn = this.database.getConnection()) {
 
             String query = "SELECT * FROM audit_logs WHERE guild_id=? ORDER BY creation DESC;";
 
@@ -854,7 +854,7 @@ public class Backup {
             // get audit logs
             List<AuditLogEntry> logs = new ArrayList<>();
 
-            try (Connection conn = this.readDatabase.getConnection()) {
+            try (Connection conn = this.database.getConnection()) {
 
                 String query = "SELECT * FROM audit_logs WHERE guild_id=? AND creation>?;";
                 try (PreparedStatement ps = conn.prepareStatement(query)) {
@@ -911,7 +911,7 @@ public class Backup {
      */
     public Timestamp getLastSavedMessageTime (TextChannel channel) {
 
-        try (Connection conn = this.readDatabase.getConnection()) {
+        try (Connection conn = this.database.getConnection()) {
 
             String query = "SELECT * FROM messages WHERE channel_id=? ORDER BY creation DESC;";
 
@@ -938,7 +938,7 @@ public class Backup {
 
     public void markMessageDeleted (long messageId, long time) {
 
-        try (Connection conn = this.writeDatabase.getConnection()) {
+        try (Connection conn = this.database.getConnection()) {
 
             String query = "UPDATE `messages` SET deleted=?, deletion_time=? WHERE message_id=?;";
 
@@ -967,7 +967,7 @@ public class Backup {
         Utils.runAsync( () -> {
 
             System.out.println("Checking if any deleted messages in #" + channel.getName() + " have not been updated to the database...");
-            try (Connection conn = this.readDatabase.getConnection()) {
+            try (Connection conn = this.database.getConnection()) {
 
                 String query = "SELECT `message_id` FROM messages WHERE channel_id=? AND creation>? ORDER BY creation ASC;";
 

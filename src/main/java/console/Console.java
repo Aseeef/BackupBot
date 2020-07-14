@@ -101,7 +101,7 @@ public class Console {
             }
             // Close database pool connection
             System.out.println("Closing connections to database...");
-            for (BaseDatabase database : BaseDatabase.getAllInstances())
+            for (BaseDatabase database : BaseDatabase.getInstances())
                 database.close();
         }));
     }

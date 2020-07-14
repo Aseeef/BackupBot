@@ -46,9 +46,6 @@ public class Serializer {
         return embedsData.toString();
     }
 
-    public static String serializePerms(EnumSet<Permission> permissions) {
-        return permissions.toString();
-    }
 
     public static String serializePermOverrides(List<PermissionOverride> permissionOverrides) {
 
@@ -61,8 +58,8 @@ public class Serializer {
             if (mpo.getMember() == null) return;
             permsData.put("memberOverrides", new JSONObject()
                     .put("memberId", mpo.getMember().getIdLong())
-                    .put("allowed", mpo.getAllowed().toString())
-                    .put("denied", mpo.getDenied().toString())
+                    .put("allowed", Permission.getRaw(mpo.getAllowed()))
+                    .put("denied", Permission.getRaw(mpo.getDenied()))
             );
         });
 
@@ -70,8 +67,8 @@ public class Serializer {
             if (rpo.getRole() == null) return;
             permsData.put("roleOverrides", new JSONObject()
                     .put("role", rpo.getRole().getIdLong())
-                    .put("allowed", rpo.getAllowed().toString())
-                    .put("denied", rpo.getDenied().toString())
+                    .put("allowed", Permission.getRaw(rpo.getAllowed()))
+                    .put("denied", Permission.getRaw(rpo.getDenied()))
             );
         });
 

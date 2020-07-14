@@ -1,6 +1,5 @@
 package sql;
 
-import javax.swing.text.html.Option;
 import java.util.*;
 
 /**
@@ -11,8 +10,7 @@ import java.util.*;
  */
 public class BaseDatabase extends DatabaseHandler {
 
-	private static List<BaseDatabase> writeInstances = new ArrayList<>();
-	private static List<BaseDatabase> readInstances = new ArrayList<>();
+	private static List<BaseDatabase> databases = new ArrayList<>();
 	private String dbName;
 
 	/**
@@ -25,41 +23,19 @@ public class BaseDatabase extends DatabaseHandler {
 	}
 
 	/**
-	 * Get an instances of base database for database reading. The read database contains only
-	 * a single pool since concurrent writing is not possible with SQL lite.
-	 *
-	 * @return - Returns base database - its connection should only be used for writing data!
+	 * @return - Returns base database connection
 	 */
-	public static BaseDatabase getWriteInstance(String dbName) {
-		Optional<BaseDatabase> optionalDatabase = writeInstances.stream().filter(database -> database.dbName.equalsIgnoreCase(dbName)).findFirst();
+	public static BaseDatabase getInstance(String dbName) {
+		Optional<BaseDatabase> optionalDatabase = databases.stream().filter(database -> database.dbName.equalsIgnoreCase(dbName)).findFirst();
 		if (!optionalDatabase.isPresent()) {
 			BaseDatabase database = new BaseDatabase(dbName, 1);
-			writeInstances.add(database);
+			databases.add(database);
 			return database;
 		}
 		return optionalDatabase.get();
 	}
 
-	/**
-	 * Get an instances of base database for database reading. The read database contains multiple
-	 * pools since concurrent reading is possible with SQL lite.
-	 *
-	 * @return - Returns base database - its connection should only be used for reading data!
-	 */
-	public static BaseDatabase getReadInstance(String dbName) {
-		Optional<BaseDatabase> optionalDatabase = readInstances.stream().filter(database -> database.dbName.equalsIgnoreCase(dbName)).findFirst();
-		if (!optionalDatabase.isPresent()) {
-			BaseDatabase database = new BaseDatabase(dbName, 50);
-			readInstances.add(database);
-			return database;
-		}
-		return optionalDatabase.get();
-	}
-
-	public static List<BaseDatabase> getAllInstances() {
-		List<BaseDatabase> databases = new ArrayList<>();
-		databases.addAll(writeInstances);
-		databases.addAll(readInstances);
+	public static List<BaseDatabase> getInstances() {
 		return databases;
 	}
 

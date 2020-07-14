@@ -7,8 +7,6 @@ import net.dv8tion.jda.api.events.ReadyEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.UUID;
-
 public class OnReady extends ListenerAdapter {
 
     public void onReady (@NotNull ReadyEvent event) {
@@ -16,7 +14,7 @@ public class OnReady extends ListenerAdapter {
         // register events
         Backups.getJda().addEventListener(new MessageEvents());
 
-        Guild guild = Backups.getJda().getGuildById(410204006569213955L);
+        Guild guild = Backups.getJda().getGuildById(315652293410422791L);
         if (guild == null) return;
 
         Backup backup = new Backup(guild);

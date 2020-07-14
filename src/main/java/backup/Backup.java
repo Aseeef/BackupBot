@@ -41,7 +41,7 @@ public class Backup {
         CompletableFuture<Void> futureCompletion = new CompletableFuture<>();
 
         this.readDatabase = BaseDatabase.getReadInstance(this.guild.getId());
-
+        this.readDatabase.init();
         this.writeDatabase = BaseDatabase.getWriteInstance(this.guild.getId());
         this.writeDatabase.init();
         Utils.runAsync( () -> {
@@ -76,7 +76,7 @@ public class Backup {
                         "hoisted TINYINT (1), " +
                         "role_order SMALLINT, " +
                         "permissions VARCHAR, " +
-                        "deleted TINYINT (1) default 0," +
+                        "deleted TINYINT (1) default 0, " +
                         "deletion_time timestamp default null);";
                 try (PreparedStatement ps = conn.prepareStatement(createRoles)) {
                     ps.execute();
@@ -94,8 +94,8 @@ public class Backup {
                 // creates the emotes table
                 String createEmotes = "CREATE TABLE IF NOT EXISTS emotes (" +
                         "emote_id BIGINT UNIQUE PRIMARY KEY NOT NULL, " +
-                        "emote_name VARCHAR (25)," +
-                        "deleted TINYINT (1) default 0," +
+                        "emote_name VARCHAR (25), " +
+                        "deleted TINYINT (1) default 0, " +
                         "deletion_time timestamp default null);";
                 try (PreparedStatement ps = conn.prepareStatement(createEmotes)) {
                     ps.execute();
@@ -105,8 +105,8 @@ public class Backup {
                 String bannedUsers = "CREATE TABLE IF NOT EXISTS bans (" +
                         "user_id BIGINT PRIMARY KEY UNIQUE NOT NULL, " +
                         "user_tag VARCHAR(75), " +
-                        "ban_reason VARCHAR," +
-                        "unbanned TINYINT (1) default 0," +
+                        "ban_reason VARCHAR, " +
+                        "unbanned TINYINT (1) default 0, " +
                         "unban_time timestamp default null);";
                 try (PreparedStatement ps = conn.prepareStatement(bannedUsers)) {
                     ps.execute();
@@ -117,8 +117,8 @@ public class Backup {
                 String createCategories = "CREATE TABLE IF NOT EXISTS categories (" +
                         "category_id BIGINT PRIMARY KEY UNIQUE NOT NULL, " +
                         "category_name VARCHAR (50), " +
-                        "permissions VARCHAR" +
-                        "deleted TINYINT (1) default 0," +
+                        "permissions VARCHAR, " +
+                        "deleted TINYINT (1) default 0, " +
                         "deletion_time timestamp default null);";
                 try (PreparedStatement ps = conn.prepareStatement(createCategories)) {
                     ps.execute();
@@ -131,7 +131,7 @@ public class Backup {
                         "channel_name VARCHAR (50), " +
                         "bitrate INT, " +
                         "user_limit SMALLINT, " +
-                        "permission VARCHAR" +
+                        "permission VARCHAR, " +
                         "deleted TINYINT (1) default 0," +
                         "deletion_time timestamp default null);";
                 try (PreparedStatement ps = conn.prepareStatement(createVoiceChannels)) {
@@ -711,7 +711,7 @@ public class Backup {
                 }
             }
 
-        } catch (SQLException e) {
+        } catch (SQLException | NullPointerException e) {
             e.printStackTrace();
         }
 

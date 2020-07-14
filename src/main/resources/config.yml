@@ -1,0 +1,89 @@
+---
+##########################################
+###       DISCORD BACKUP BOT           ###
+### Protect your discord from disaster ###
+###                                    ###
+###      ~ Created by SkylixMC         ###
+##########################################
+
+
+########################
+# GENERAL BOT SETTINGS #
+########################
+
+# The bot token that the bot should use to log in
+botToken: "insert your bot id here"
+
+# The name of the bot (warning: if the name is too common, the bot will not start)
+botName: "Lifeline"
+
+# The prefix that the bot commands should use
+commandPrefix: "b/"
+
+# Some OS or consoles may not support console colors. Just disable them here.
+coloredConsole: true
+
+# The discord role id required to use commands for this bot. Set to "null" to only allow guild owner access to the backup bot.
+# This are all valid permissions: CREATE_INSTANT_INVITE, KICK_MEMBERS, BAN_MEMBERS, ADMINISTRATOR, MANAGE_CHANNEL, MANAGE_SERVER, MESSAGE_ADD_REACTION,
+# VIEW_AUDIT_LOGS, PRIORITY_SPEAKER, VIEW_GUILD_INSIGHTS, VIEW_CHANNEL, MESSAGE_READ, MESSAGE_WRITE, MESSAGE_TTS, MESSAGE_MANAGE, MESSAGE_EMBED_LINKS,
+# MESSAGE_ATTACH_FILES, MESSAGE_HISTORY, MESSAGE_MENTION_EVERYONE, MESSAGE_EXT_EMOJI, VOICE_STREAM, VOICE_CONNECT, VOICE_SPEAK, VOICE_MUTE_OTHERS,
+# VOICE_DEAF_OTHERS, VOICE_MOVE_OTHERS, VOICE_USE_VAD, NICKNAME_CHANGE, NICKNAME_MANAGE, MANAGE_ROLES, MANAGE_PERMISSIONS, MANAGE_WEBHOOKS, MANAGE_EMOTES, UNKNOWN
+usePermissionRequired: "ADMINISTRATOR"
+
+
+########################
+#   BACK UP SETTINGS   #
+########################
+
+backupSettings:
+
+  # Text Channel ids which should be ignored by the message backup (e.g. you may want to black list log channels)
+  blacklistedChannels: []
+
+  # How old in hours can a message be before the bot will no longer update modifications for it.
+  # This feature is useful because most messages are no longer edited, deleted or reacted on after
+  # the are old enough. Therefore, it may not always be worth wasting precious CPU on Uchecking if an
+  # old message has been updated especially when refreshing back ups for big channels.
+  # Set to -1 to disable this feature.
+  messageUpdateTime: -1
+
+  # The maximum size an attachment can be in megabytes before the bot will no longer attempt to save the attachment.
+  # Attachments can be a real space killer so you may want to use this feature.
+  # Set to -1 to disable this feature and download attachments of all sizes.
+  # Set to 0 to disable attachment saving.
+  maxAttachmentSize: 12
+
+  # Should attachment files and other files be compressed and zipped to save storage?
+  zipFiles: true
+
+
+########################
+#   ENABLED BACK UPS   #
+########################
+
+enabledBackups:
+
+  # Enable backups for bans?
+  backupBans: true
+
+  # Enable backups for server emojis?
+  backupEmojis: true
+
+  # Enable backups for roles?
+  backupRoles: true
+
+  # Enable backups for channels (categories, text and voice channels)
+  # Role backups must be enabled to use this.
+  backupChannels: true
+
+  # Enable backups for member roles and nicknames?
+  # Role backups must be enabled to use this.
+  backupMembers: true
+
+  # Enable backups for text channel messages?
+  # Channel, roles, and emoji backups must be enabled to use this.
+  backupMessages: true
+
+  # Enable backups for setting settings (e.g. server icon, afk channels, afk timeout time, welcome channels, verification settings, etc...
+  # Channel backup must be enabled to use this.
+  backupServerSettings: true

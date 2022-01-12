@@ -1,0 +1,61 @@
+plugins {
+    id "java"
+    id "com.github.johnrengelman.shadow" version "6.1.0"
+    id "io.freefair.lombok" version "6.1.0"
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'dev.aseef.Main'
+    }
+}
+
+group 'dev.aseef'
+version '1.0.0'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+compileJava.options.encoding = "UTF-8"
+compileTestJava.options.encoding = "UTF-8"
+
+repositories {
+    mavenCentral()
+    maven {
+        url 'https://jitpack.io'
+    }
+    maven {
+        url 'https://m2.dv8tion.net/releases'
+    }
+    maven {
+        url 'https://mvnrepository.com/artifact/org.json/'
+    }
+    maven {
+        url 'https://mvnrepository.com/artifact/jfree/jfreechart'
+    }
+}
+
+dependencies {
+    implementation 'net.dv8tion:JDA:4.4.0_350'
+    implementation 'com.fasterxml.jackson.core:jackson-core:2.10.0'
+    implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.9.8'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.10.0'
+    implementation 'org.apache.httpcomponents:httpclient:4.5.6'
+    implementation 'org.apache.httpcomponents:httpmime:4.5.6'
+    implementation 'com.zaxxer:HikariCP:2.6.0'
+    implementation 'mysql:mysql-connector-java:5.1.36'
+    implementation 'com.github.cadox8:XenAPI:0.5.0'
+    implementation 'club.minnced:discord-webhooks:0.7.5'
+    implementation 'jfree:jfreechart:1.0.13'
+    implementation 'net.lingala.zip4j:zip4j:2.6.1'
+    implementation 'com.electronwill.night-config:yaml:3.6.5'
+}
+
+shadowJar {
+    archiveFileName = project.name + ".jar"
+    destinationDirectory = file("build")
+}
+
+// Force character encoding in case the workspace was not set up correctly
+tasks.withType(Javadoc) {
+    options.encoding = 'UTF-8'
+}

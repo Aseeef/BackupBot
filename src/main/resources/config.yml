@@ -3,7 +3,7 @@
 ###       DISCORD BACKUP BOT           ###
 ### Protect your discord from disaster ###
 ###                                    ###
-###      ~ Created by SkylixMC         ###
+###      ~ Created by Aseef I.         ###
 ##########################################
 
 
@@ -17,13 +17,16 @@ botToken: "insert your bot id here"
 # The name of the bot (warning: if the name is too common, the bot will not start)
 botName: "Lifeline"
 
-# The prefix that the bot commands should use
+# The prefix that the bot dev.aseef.commands should use
 commandPrefix: "b/"
 
-# Some OS or consoles may not support console colors. Just disable them here.
+# Some OS or consoles may not support dev.aseef.console colors. Just disable them here.
 coloredConsole: true
 
-# The discord role id required to use commands for this bot. Set to "null" to only allow guild owner access to the backup bot.
+# Thread Executor Pool size
+thread-pool: 8
+
+# The discord role id required to use dev.aseef.commands for this bot. Set to "null" to only allow guild owner access to the dev.aseef.backup bot.
 # This are all valid permissions: CREATE_INSTANT_INVITE, KICK_MEMBERS, BAN_MEMBERS, ADMINISTRATOR, MANAGE_CHANNEL, MANAGE_SERVER, MESSAGE_ADD_REACTION,
 # VIEW_AUDIT_LOGS, PRIORITY_SPEAKER, VIEW_GUILD_INSIGHTS, VIEW_CHANNEL, MESSAGE_READ, MESSAGE_WRITE, MESSAGE_TTS, MESSAGE_MANAGE, MESSAGE_EMBED_LINKS,
 # MESSAGE_ATTACH_FILES, MESSAGE_HISTORY, MESSAGE_MENTION_EVERYONE, MESSAGE_EXT_EMOJI, VOICE_STREAM, VOICE_CONNECT, VOICE_SPEAK, VOICE_MUTE_OTHERS,
@@ -37,7 +40,7 @@ usePermissionRequired: "ADMINISTRATOR"
 
 backupSettings:
 
-  # Text Channel ids which should be ignored by the message backup (e.g. you may want to black list log channels)
+  # Text Channel ids which should be ignored by the message dev.aseef.backup (e.g. you may want to black list log channels)
   blacklistedChannels: []
 
   # How old in hours can a message be before the bot will no longer update modifications for it.
@@ -85,5 +88,5 @@ enabledBackups:
   backupMessages: true
 
   # Enable backups for setting settings (e.g. server icon, afk channels, afk timeout time, welcome channels, verification settings, etc...
-  # Channel backup must be enabled to use this.
+  # Channel dev.aseef.backup must be enabled to use this.
   backupServerSettings: true

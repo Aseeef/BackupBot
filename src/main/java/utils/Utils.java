@@ -21,6 +21,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -118,7 +119,7 @@ public class Utils {
         try {
             ZipParameters parameters = new ZipParameters();
             parameters.setCompressionMethod(CompressionMethod.DEFLATE);
-            parameters.setCompressionLevel(CompressionLevel.ULTRA);
+            parameters.setCompressionLevel(CompressionLevel.MAXIMUM);
             File zip = new File(file.getParent() + ".zip");
             new ZipFile(zip).addFile(file, parameters);
 
@@ -174,6 +175,14 @@ public class Utils {
 
     public static float getMegabytes(long bytes) {
         return (Math.round((bytes / 1024f / 1024f) * 100f) / 100f);
+    }
+
+    public static float calculateListAvg(List<Long> values) {
+        Long total = 0L;
+        for (Long value : values) {
+            total += value;
+        }
+        return total / (float) values.size();
     }
 
 }

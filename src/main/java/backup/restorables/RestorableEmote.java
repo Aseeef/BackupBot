@@ -1,5 +1,7 @@
 package backup.restorables;
 
+import net.dv8tion.jda.api.audit.ActionType;
+import net.dv8tion.jda.api.audit.AuditLogEntry;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Icon;
 import utils.Utils;
@@ -7,7 +9,9 @@ import utils.Utils;
 import java.io.File;
 import java.io.IOException;
 import java.sql.Timestamp;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class RestorableEmote extends Restorable {
 
@@ -21,7 +25,10 @@ public class RestorableEmote extends Restorable {
     }
 
     @Override
-    public void restore(long time) {
+    /**
+     * @param List<AuditLogEntry> logs - The logs MUST be provided in chronological order from oldest to latest.
+     */
+    public void restore(long time, List<AuditLogEntry> logs) {
         if (this.getRestoreType(time) == RestoreType.RESTORE) {
             Optional<File> file = Utils.getImageFile("emotes", emoteId);
             try {
@@ -31,7 +38,15 @@ public class RestorableEmote extends Restorable {
                 e.printStackTrace();
             }
         } else if (this.getRestoreType(time) == RestoreType.EDIT) {
+            logs = logs.stream().filter( (l) -> l.getType() == ActionType.EMOTE_UPDATE).collect(Collectors.toList());
+            Optional<AuditLogEntry> optionalLog = logs.stream().filter( l -> l.getTimeCreated().toInstant().toEpochMilli() > time).findFirst();
 
+            if (optionalLog.isPresent() && optionalLog.get().getChanges().containsKey("name")) {
+                AuditLogEntry log = optionalLog.get();
+                String oldName = log.getChanges().get("name").getOldValue().toString();
+                this.guild.retrieveEmoteById(this.emoteId).complete().getManager().setName(oldName).queue();
+                //TODO update this data in the database But make a backup.?
+            }
         }
     }
 }

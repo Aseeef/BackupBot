@@ -3,6 +3,8 @@ package sql;
 import com.zaxxer.hikari.HikariDataSource;
 import sql.component.Database;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -55,14 +57,22 @@ public class DatabaseHandler implements Database {
 	 * Sets up the configuration for the connection pool and default settings.
 	 * </p>
 	 * 
-	 * @param dbName - the name for the database
+	 * @param dbPath - the name for the database
 	 */
-	public void init(String dbName) {
-		this.dbName = dbName;
+	public void init(String dbPath) {
+		this.dbName = dbPath;
+
+		try {
+			File dbFile = new File(this.dbName);
+			dbFile.getParentFile().mkdir();
+			dbFile.createNewFile();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 
 		// set the jdbc url, note the character encoding
 		// https://stackoverflow.com/questions/3040597/jdbc-character-encoding
-		hikariSource.setJdbcUrl("jdbc:sqlite:db/" + dbName + ".db");
+		hikariSource.setJdbcUrl("jdbc:sqlite:" + this.dbName);
 
 		/** General conf settings for hikari */
 		// works best when minIdle=maxPoolSize

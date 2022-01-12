@@ -1,8 +1,10 @@
 package backup.restorables;
 
+import net.dv8tion.jda.api.audit.AuditLogEntry;
 import net.dv8tion.jda.api.entities.Guild;
 
 import java.sql.Timestamp;
+import java.util.List;
 
 public abstract class Restorable {
 
@@ -39,6 +41,6 @@ public abstract class Restorable {
      *
      * @return - Returns a completable future completed when the action is complete
      */
-    public abstract void restore(long time);
+    public abstract void restore(long time, List<AuditLogEntry> logs);
 
 }

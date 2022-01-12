@@ -26,56 +26,72 @@ public class MessageEvents extends ListenerAdapter {
     public void onGuildMessageReceived(@Nonnull GuildMessageReceivedEvent event) {
         if (Config.get().getBackupSettings().getBlacklistedChannels().contains(event.getChannel().getIdLong())) return;
 
-        Utils.runAsync( () ->
-                Backup.getInstance().backupMessages(event.getMessage()));
+        Backup backup = Backup.getInstance(event.getGuild()).orElse(null);
+        Utils.runAsync( () -> {
+            if (backup != null)
+                backup.backupMessages(event.getMessage());
+            else System.out.println("Back up is null!");
+        });
     }
 
     @Override
     public void onGuildMessageDelete(@Nonnull GuildMessageDeleteEvent event) {
         if (Config.get().getBackupSettings().getBlacklistedChannels().contains(event.getChannel().getIdLong())) return;
 
-        Utils.runAsync( () ->
-                Backup.getInstance().markMessageDeleted(event.getMessageIdLong(), System.currentTimeMillis()));
+        Backup backup = Backup.getInstance(event.getGuild()).orElse(null);
+        Utils.runAsync( () -> {
+            if (backup != null)
+                backup.markMessageDeleted(event.getMessageIdLong(), System.currentTimeMillis());
+            else System.out.println("Back up is null!");
+        });
     }
 
     @Override
     public void onGuildMessageReactionRemoveAll (@NotNull GuildMessageReactionRemoveAllEvent event) {
         if (Config.get().getBackupSettings().getBlacklistedChannels().contains(event.getChannel().getIdLong())) return;
 
-        Utils.runAsync( () ->
-                Backup.getInstance().backupMessages(
-                        event.getChannel().retrieveMessageById(event.getMessageId()).complete()
-                ));
+        Backup backup = Backup.getInstance(event.getGuild()).orElse(null);
+        Utils.runAsync( () -> {
+            if (backup != null)
+                backup.backupMessages(event.getChannel().retrieveMessageById(event.getMessageId()).complete());
+            else System.out.println("Back up is null!");
+        });
     }
 
     @Override
     public void onGuildMessageReactionRemove (@NotNull GuildMessageReactionRemoveEvent event) {
         if (Config.get().getBackupSettings().getBlacklistedChannels().contains(event.getChannel().getIdLong())) return;
 
-        Utils.runAsync( () ->
-                Backup.getInstance().backupMessages(
-                        event.getChannel().retrieveMessageById(event.getMessageId()).complete()
-                ));
+        Backup backup = Backup.getInstance(event.getGuild()).orElse(null);
+        Utils.runAsync( () -> {
+            if (backup != null)
+                backup.backupMessages(event.getChannel().retrieveMessageById(event.getMessageId()).complete());
+            else System.out.println("Back up is null!");
+        });
     }
 
     @Override
     public void onGuildMessageReactionAdd (@NotNull GuildMessageReactionAddEvent event) {
         if (Config.get().getBackupSettings().getBlacklistedChannels().contains(event.getChannel().getIdLong())) return;
 
-        Utils.runAsync( () ->
-                Backup.getInstance().backupMessages(
-                        event.getChannel().retrieveMessageById(event.getMessageId()).complete()
-                ));
+        Backup backup = Backup.getInstance(event.getGuild()).orElse(null);
+        Utils.runAsync( () -> {
+            if (backup != null)
+                backup.backupMessages(event.getChannel().retrieveMessageById(event.getMessageId()).complete());
+            else System.out.println("Back up is null!");
+        });
     }
 
     @Override
     public void onGuildMessageUpdate (@NotNull GuildMessageUpdateEvent event) {
         if (Config.get().getBackupSettings().getBlacklistedChannels().contains(event.getChannel().getIdLong())) return;
 
-        Utils.runAsync( () ->
-                Backup.getInstance().backupMessages(
-                        event.getChannel().retrieveMessageById(event.getMessageId()).complete()
-                ));
+        Backup backup = Backup.getInstance(event.getGuild()).orElse(null);
+        Utils.runAsync( () -> {
+            if (backup != null)
+                backup.backupMessages(event.getMessage());
+            else System.out.println("Back up is null!");
+        });
     }
 
 }

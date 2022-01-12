@@ -5,7 +5,8 @@ import console.commands.ConsoleCommand;
 import console.commands.listeners.ConsoleHelpCommand;
 import console.commands.listeners.ConsoleMemoryCommand;
 import console.commands.listeners.ConsoleStopCommand;
-import sql.BaseDatabase;
+import sql.BackupDB;
+import sql.DatabaseHandler;
 
 import java.io.OutputStream;
 import java.io.PrintStream;
@@ -101,7 +102,7 @@ public class Console {
             }
             // Close database pool connection
             System.out.println("Closing connections to database...");
-            for (BaseDatabase database : BaseDatabase.getInstances())
+            for (DatabaseHandler database : BackupDB.getInstances())
                 database.close();
         }));
     }

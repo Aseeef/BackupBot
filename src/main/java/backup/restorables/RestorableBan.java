@@ -1,8 +1,10 @@
 package backup.restorables;
 
+import net.dv8tion.jda.api.audit.AuditLogEntry;
 import net.dv8tion.jda.api.entities.Guild;
 
 import java.sql.Timestamp;
+import java.util.List;
 
 public class RestorableBan extends Restorable {
 
@@ -24,7 +26,7 @@ public class RestorableBan extends Restorable {
     }
 
     @Override
-    public void restore(long time) {
+    public void restore(long time, List<AuditLogEntry> logs) {
         if (this.getRestoreType(time) == RestoreType.RESTORE) {
             this.guild.ban(String.valueOf(userId), 0, banReason).queue();
         }

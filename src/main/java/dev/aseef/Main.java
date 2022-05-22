@@ -18,7 +18,7 @@ public class Main {
 
     public static void main(String[] args) {
 
-        // Set dev.aseef.console output settings
+        // Set console output settings
         System.setOut(new Logs.GeneralStream(System.out));
         System.setErr(new Logs.ErrorStream(System.err));
         Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> {
@@ -30,7 +30,7 @@ public class Main {
         Console.loadShutdownHook();
         Console.loadConsoleCommands();
 
-        // load dev.aseef.config
+        // load config
         Config.load();
 
         try {

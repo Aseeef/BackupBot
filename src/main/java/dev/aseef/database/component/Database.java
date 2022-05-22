@@ -1,4 +1,4 @@
-package dev.aseef.sql.component;
+package dev.aseef.database.component;
 
 import java.sql.Connection;
 

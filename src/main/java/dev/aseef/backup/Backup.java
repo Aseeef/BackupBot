@@ -1,6 +1,10 @@
 package dev.aseef.backup;
 
+import dev.aseef.Main;
 import dev.aseef.config.Config;
+import dev.aseef.database.BackupDB;
+import dev.aseef.utils.Serializer;
+import dev.aseef.utils.Utils;
 import dev.aseef.utils.threads.ThreadUtil;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.audit.ActionType;
@@ -10,10 +14,6 @@ import net.dv8tion.jda.api.exceptions.ErrorResponseException;
 import net.dv8tion.jda.api.requests.restaction.pagination.PaginationAction;
 import net.dv8tion.jda.internal.entities.GuildImpl;
 import net.dv8tion.jda.internal.entities.UserImpl;
-import dev.aseef.sql.BackupDB;
-import dev.aseef.Main;
-import dev.aseef.utils.Serializer;
-import dev.aseef.utils.Utils;
 
 import java.io.File;
 import java.sql.*;
@@ -27,14 +27,14 @@ import java.util.stream.Collectors;
 
 public class Backup {
 
-    private static List<Backup> instances = new ArrayList<>();
+    private static final List<Backup> instances = new ArrayList<>();
 
-    private Guild guild;
-    private BackupDB db;
+    private final Guild guild;
+    private final BackupDB db;
 
     // Long = TextChannel id
     // List<Long> = time taken
-    private ConcurrentMap<String, List<Long>> etaCalculationMap = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, List<Long>> etaCalculationMap = new ConcurrentHashMap<>();
 
     /**
      * @param guild - The guild which to create a back up of.
@@ -100,7 +100,7 @@ public class Backup {
                 futureCompletion.complete(null);
             });
         else {
-            System.out.println("Skipping dev.aseef.backup for Server settings because server settings dev.aseef.backup or one of its dependencies are disabled...");
+            System.out.println("Skipping backup for Server settings because server settings backups or one of its dependencies is disabled...");
             futureCompletion.complete(null);
         }
 
@@ -150,7 +150,7 @@ public class Backup {
                 });
             });
         else {
-            System.out.println("Skipping dev.aseef.backup for Members because member dev.aseef.backup or one of its dependencies are disabled...");
+            System.out.println("Skipping backup for Members because member backups or one of its dependencies are disabled...");
             futureMembers.complete(null);
         }
 
@@ -164,7 +164,7 @@ public class Backup {
             ThreadUtil.runAsync(() -> {
                 List<Emote> emotes = guild.getEmotes();
 
-                System.out.println("Saving server emotes to the dev.aseef.backup...");
+                System.out.println("Saving server emotes to the backup...");
                 long start = System.currentTimeMillis();
                 for (Emote emote : emotes) {
 
@@ -192,7 +192,7 @@ public class Backup {
                 futureEmotes.complete(emotes);
             });
         else {
-            System.out.println("Skipping dev.aseef.backup for emotes because emoji dev.aseef.backup is disabled!");
+            System.out.println("Skipping backup for emotes because emoji backups are disabled!");
             futureEmotes.complete(null);
         }
 
@@ -247,7 +247,7 @@ public class Backup {
                 futureBannedMembers.complete(bans);
             });
         else {
-            System.out.println("Skipping dev.aseef.backup for bans because they are disabled!");
+            System.out.println("Skipping backup for bans because they are disabled!");
             futureBannedMembers.complete(null);
         }
 
@@ -294,7 +294,7 @@ public class Backup {
                 futureRoles.complete(roles);
             });
         else {
-            System.out.println("Skipping dev.aseef.backup for roles because they are disabled!");
+            System.out.println("Skipping backup for roles because they are disabled!");
             futureRoles.complete(null);
         }
 
@@ -340,7 +340,7 @@ public class Backup {
 
             });
         else {
-            System.out.println("Skipping dev.aseef.backup for categories because channel dev.aseef.backup or one of its dependencies is disabled!");
+            System.out.println("Skipping backup for categories because channel backups or one of its dependencies is disabled!");
             futureCategories.complete(null);
         }
 
@@ -388,7 +388,7 @@ public class Backup {
                 futureVoiceChannels.complete(voiceChannels);
             });
         else {
-            System.out.println("Skipping dev.aseef.backup for voice channels because channel dev.aseef.backup or one of its dependencies is disabled!");
+            System.out.println("Skipping backup for voice channels because channel backups or one of its dependencies is disabled!");
             futureVoiceChannels.complete(null);
         }
 
@@ -438,7 +438,7 @@ public class Backup {
 
             });
         else {
-            System.out.println("Skipping dev.aseef.backup for text channels because channel dev.aseef.backup or one of its dependencies is disabled!");
+            System.out.println("Skipping backup for text channels because channel backups or one of its dependencies is disabled!");
             futureTextChannels.complete(null);
         }
 
@@ -466,7 +466,7 @@ public class Backup {
             for (TextChannel channel : channels) {
 
                 if (Config.get().getBackupSettings().getBlacklistedChannels().contains(channel.getIdLong())) {
-                    System.out.println("Skipping messages dev.aseef.backup for Text channel #" + channel.getName() + " because it is black listed in the dev.aseef.config.");
+                    System.out.println("Skipping messages backup for Text channel #" + channel.getName() + " because it is black listed in the dev.aseef.config.");
                     continue;
                 }
 
@@ -510,7 +510,7 @@ public class Backup {
 
         }
         else {
-            System.out.println("Skipping dev.aseef.backup for messages because message dev.aseef.backup or one of its dependencies is disabled!");
+            System.out.println("Skipping backup for messages because message backups or one of its dependencies is disabled!");
             futureMessages.complete(null);
         }
 

@@ -1,5 +1,6 @@
 package dev.aseef.config;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -18,6 +19,6 @@ public class BackupSettings {
     /** This is the max size for attachments that would still be backed up */
     private int maxAttachmentSize;
 
-    /** Whether files should be zipped (compressed) */
-    private boolean zipFiles;
+    /** Compression level for attachments */
+    @JsonProperty("compression-level") private int compressionLevel;
 }

@@ -1,4 +1,4 @@
-package dev.aseef.sql;
+package dev.aseef.database;
 
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.TextChannel;

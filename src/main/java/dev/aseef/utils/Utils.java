@@ -36,10 +36,8 @@ public class Utils {
         attachment.downloadToFile(file)
                 .thenAccept( f -> {
                     File zip;
-                        if (Config.get().getBackupSettings().isZipFiles()) {
-                            zip = Utils.zipFile(file);
-                            System.out.println("Created and ziped new attachment directory for attachment id " + attachment.getId() + " [Size: " + getMegabytes(attachment.getSize()) + "M] " + "[Zip Size: " + getMegabytes(zip.length()) + "M]");
-                        } else System.out.println("Created new attachment directory for attachment id " + attachment.getId() + " [Size: " + getMegabytes(attachment.getSize()) + "M]");
+                    zip = Utils.zipFile(file);
+                    System.out.println("Created and ziped new attachment directory for attachment id " + attachment.getId() + " [Size: " + getMegabytes(attachment.getSize()) + "M] " + "[Zip Size: " + getMegabytes(zip.length()) + "M]");
                 })
                 .exceptionally(t ->
                 { // handle failure
@@ -70,7 +68,7 @@ public class Utils {
             Files.copy(in, path, StandardCopyOption.REPLACE_EXISTING);
             in.close();
 
-            return !Config.get().getBackupSettings().isZipFiles() || zipFile(path.toFile()) != null;
+            return zipFile(path.toFile()) != null;
         } catch (IOException e) {
             e.printStackTrace();
             return false;

@@ -1,5 +1,7 @@
 package dev.aseef.config;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import dev.aseef.utils.Utils;
@@ -24,7 +26,7 @@ public class Config {
     /** Should dev.aseef.console be colored */
     private boolean coloredConsole;
     /** Size of the thread pool*/
-    private int threadPool;
+    @JsonProperty("thread-pool") private int threadPool;
     /** The permission required to use bot dev.aseef.commands */
     private String usePermissionRequired;
     /** Backup related settings */

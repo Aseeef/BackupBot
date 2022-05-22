@@ -26,7 +26,7 @@ coloredConsole: true
 # Thread Executor Pool size
 thread-pool: 8
 
-# The discord role id required to use dev.aseef.commands for this bot. Set to "null" to only allow guild owner access to the dev.aseef.backup bot.
+# The discord role id required to use dev.aseef.commands for this bot. Set to "null" to only allow guild owner access to the backup bot.
 # This are all valid permissions: CREATE_INSTANT_INVITE, KICK_MEMBERS, BAN_MEMBERS, ADMINISTRATOR, MANAGE_CHANNEL, MANAGE_SERVER, MESSAGE_ADD_REACTION,
 # VIEW_AUDIT_LOGS, PRIORITY_SPEAKER, VIEW_GUILD_INSIGHTS, VIEW_CHANNEL, MESSAGE_READ, MESSAGE_WRITE, MESSAGE_TTS, MESSAGE_MANAGE, MESSAGE_EMBED_LINKS,
 # MESSAGE_ATTACH_FILES, MESSAGE_HISTORY, MESSAGE_MENTION_EVERYONE, MESSAGE_EXT_EMOJI, VOICE_STREAM, VOICE_CONNECT, VOICE_SPEAK, VOICE_MUTE_OTHERS,
@@ -40,7 +40,7 @@ usePermissionRequired: "ADMINISTRATOR"
 
 backupSettings:
 
-  # Text Channel ids which should be ignored by the message dev.aseef.backup (e.g. you may want to black list log channels)
+  # Text Channel ids which should be ignored by the message backups (e.g. you may want to black list log channels)
   blacklistedChannels: []
 
   # How old in hours can a message be before the bot will no longer update modifications for it.
@@ -56,8 +56,8 @@ backupSettings:
   # Set to 0 to disable attachment saving.
   maxAttachmentSize: 12
 
-  # Should attachment files and other files be compressed and zipped to save storage?
-  zipFiles: true
+  # What compression level should we use for saving attachments? (1=Low/Fast Compression - 9=Ultra/Slow Compression)
+  compression-level: 7
 
 
 ########################
@@ -88,5 +88,5 @@ enabledBackups:
   backupMessages: true
 
   # Enable backups for setting settings (e.g. server icon, afk channels, afk timeout time, welcome channels, verification settings, etc...
-  # Channel dev.aseef.backup must be enabled to use this.
+  # Channel backups must be enabled to use this.
   backupServerSettings: true

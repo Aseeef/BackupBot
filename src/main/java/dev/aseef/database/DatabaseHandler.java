@@ -1,7 +1,7 @@
-package dev.aseef.sql;
+package dev.aseef.database;
 
 import com.zaxxer.hikari.HikariDataSource;
-import dev.aseef.sql.component.Database;
+import dev.aseef.database.component.Database;
 
 import java.io.File;
 import java.io.IOException;
@@ -72,7 +72,7 @@ public class DatabaseHandler implements Database {
 
 		// set the jdbc url, note the character encoding
 		// https://stackoverflow.com/questions/3040597/jdbc-character-encoding
-		hikariSource.setJdbcUrl("jdbc:sqlite:" + this.dbName);
+		hikariSource.setJdbcUrl("jdbc:h2:" + this.dbName);
 
 		/** General conf settings for hikari */
 		// works best when minIdle=maxPoolSize

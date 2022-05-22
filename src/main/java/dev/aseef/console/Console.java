@@ -4,8 +4,8 @@ import dev.aseef.console.commands.ConsoleCommand;
 import dev.aseef.console.commands.listeners.ConsoleHelpCommand;
 import dev.aseef.console.commands.listeners.ConsoleMemoryCommand;
 import dev.aseef.console.commands.listeners.ConsoleStopCommand;
-import dev.aseef.sql.BackupDB;
-import dev.aseef.sql.DatabaseHandler;
+import dev.aseef.database.BackupDB;
+import dev.aseef.database.DatabaseHandler;
 import dev.aseef.Main;
 
 import java.io.OutputStream;

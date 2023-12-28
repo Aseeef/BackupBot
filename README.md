@@ -1,0 +1,1 @@
+The uncreatively named Backup Bot is a multi-threaded Discord Bot that is able to backup your Discord Server's roles, channels, messages, and settings. Then, in case, you are unfortunate enough to have your discord nuked, then, fret not! You have everything stashed away securely in your SQLLite database!
